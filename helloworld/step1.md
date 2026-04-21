@@ -4,5 +4,8 @@ First, we need to install the Snapcraft tool itself. We'll also install `LXD` be
 Click this command to install:
 `snap install snapcraft --classic`{{execute}}
 
+As you can see, it fails because snap is not installed itself. Install it:
+`apt install snapd`
+
 Now, initialize LXD (just press Enter for all defaults):
 `lxd init --auto`{{execute}}
