@@ -1,18 +1,22 @@
 {
   "title": "Snapcraft 101",
-  "description": "Learn strict confinement",
+  "description": "Learn how to build a strictly confined Snap",
   "backend": {
     "imageid": "ubuntu"
   },
   "details": {
-    "sections": [
+    "steps": [
       {
-        "title": "Build your first Snap",
-        "steps": [
-          { "title": "Install", "text": "step1.md" },
-          { "title": "Create", "text": "step2.md" },
-          { "title": "Confine", "text": "step3.md" }
-        ]
+        "title": "Install Snapcraft",
+        "text": "step1.md"
+      },
+      {
+        "title": "Create Hello World",
+        "text": "step2.md"
+      },
+      {
+        "title": "Strict Confinement",
+        "text": "step3.md"
       }
     ],
     "intro": {
