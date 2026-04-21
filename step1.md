@@ -1,8 +1,0 @@
-## Step 1: Install Snapcraft
-First, we need to install the Snapcraft tool itself. We'll also install `LXD` because Snapcraft uses containers to ensure clean builds.
-
-Click this command to install:
-`snap install snapcraft --classic`{{execute}}
-
-Now, initialize LXD (just press Enter for all defaults):
-`lxd init --auto`{{execute}}
