@@ -27,7 +27,7 @@ EOF
 
 ### Build the Snap
 Now, let's build it. This will take a minute as it sets up the build environment:
-`snapcraft`{{execute}}
+`snapcraft pack`{{execute}}
 
 ### Install and Test
 Once finished, install your local snap file:
