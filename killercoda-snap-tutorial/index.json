@@ -1,0 +1,34 @@
+{
+  "title": "Creating a Strictly Confined Snap",
+  "description": "Learn how to build a strictly confined snap from a C++ application and deploy it on an Ubuntu Core LXD environment.",
+  "details": {
+    "steps": [
+      {
+        "title": "Create a C++ Application",
+        "text": "step1.md"
+      },
+      {
+        "title": "Create an Unconfined Snap",
+        "text": "step2.md"
+      },
+      {
+        "title": "Strict Confinement & LXD Deployment",
+        "text": "step3.md"
+      }
+    ],
+    "intro": {
+      "text": "intro.md",
+      "credits": ""
+    },
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "environment": {
+    "uilayout": "terminal",
+    "image": "ubuntu"
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  }
+}
