@@ -1,0 +1,41 @@
+{
+  "title": "Snap Packaging Introduction",
+  "description": "Learn the internals of snap packages: download, inspect assertions, explore the SquashFS filesystem, and repack snaps.",
+  "details": {
+    "intro": {
+      "text": "intro.md"
+    },
+    "steps": [
+      {
+        "title": "Download the hello-world snap",
+        "text": "step1.md"
+      },
+      {
+        "title": "Acknowledge assertions and install the snap",
+        "text": "step2.md"
+      },
+      {
+        "title": "Inspect the assertions file",
+        "text": "step3.md"
+      },
+      {
+        "title": "Explore the snap file format",
+        "text": "step4.md"
+      },
+      {
+        "title": "Unsquash and explore the snap contents",
+        "text": "step5.md"
+      },
+      {
+        "title": "Repack and install in dangerous mode",
+        "text": "step6.md"
+      }
+    ],
+    "finish": {
+      "text": "finish.md"
+    }
+  },
+  "backend": {
+    "imageid": "ubuntu"
+  }
+}
