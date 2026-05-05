@@ -32,10 +32,17 @@ apps:
 EOF
 ```{{execute}}
 
+First, we need to ensure `snap` is installed and then install `snapcraft` to build our snap:
+
+```bash
+sudo apt update && sudo apt install -y snapd
+sudo snap install snapcraft --classic
+```{{execute}}
+
 Let's build the snap. This process will set up an environment and compile the application. It may take a minute or two:
 
 ```bash
-snapcraft
+snapcraft pack
 ```{{execute}}
 
 After the build completes, install the snap. Since it is unsigned and we built it with `devmode`, we must use `--devmode` and `--dangerous` to install it:

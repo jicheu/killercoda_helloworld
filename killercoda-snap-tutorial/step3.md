@@ -36,7 +36,7 @@ Clean the previous build and rebuild the snap:
 
 ```bash
 snapcraft clean
-snapcraft
+snapcraft pack
 ```{{execute}}
 
 Install the updated, strictly confined snap:
@@ -91,7 +91,7 @@ EOF
 Rebuild and install the snap one final time:
 
 ```bash
-snapcraft
+snapcraft pack
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
 ```{{execute}}
 
