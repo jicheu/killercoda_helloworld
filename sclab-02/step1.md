@@ -1,8 +1,25 @@
 # Step 1 – Download the hello-world snap
 
-The `snap download` command fetches a snap and its accompanying assertions from the Snap Store without installing it. This is useful when you want to inspect or sideload a snap.
+## Objectives
 
-Run the following command:
+In this step you will:
+
+- Download a snap package and its assertions from the Snap Store **without** installing it
+- Understand the two files that `snap download` produces
+
+## Required tools
+
+`snapd` (which provides the `snap` CLI) is pre-installed and started in the background for you. Confirm it is ready:
+
+```bash
+snap version
+```{{exec}}
+
+You should see output that includes a `snap` version line. If the command is not found yet, wait a few seconds and retry — the background setup script is still running.
+
+## Download the snap
+
+The `snap download` command fetches a snap and its signed assertions from the Snap Store without installing it. This is useful when you want to inspect or sideload a snap offline.
 
 ```bash
 snap download hello-world
@@ -18,12 +35,14 @@ Install the snap with:
     snap install hello-world_29.snap
 ```
 
-Two files are downloaded to your current directory:
+Two files are written to your current directory:
 
-- **`hello-world_<rev>.snap`** – the snap package itself (a SquashFS image)
-- **`hello-world_<rev>.assert`** – a bundle of signed assertions from the Snap Store
+| File | Description |
+|---|---|
+| `hello-world_<rev>.snap` | The snap package itself — a compressed SquashFS image |
+| `hello-world_<rev>.assert` | A bundle of signed assertions from the Snap Store |
 
-> **Note:** The revision number in the filenames (e.g. `_29`) may differ because the snap may have been updated since this lab was written. The commands in subsequent steps use a shell glob (`hello-world_*.snap`) to handle this automatically.
+> **Note:** The revision number (e.g. `_29`) reflects the latest published revision and may differ from the examples in this lab. Subsequent steps use shell globs (`hello-world_*.snap`) to handle this automatically.
 
 Verify the files are present:
 
@@ -31,6 +50,10 @@ Verify the files are present:
 ls -lh hello-world_*
 ```{{exec}}
 
-You should see both the `.snap` and `.assert` files listed.
+Both the `.snap` and `.assert` files should be listed.
 
-> **Further reading:** [Snap documentation – Getting started](https://snapcraft.io/docs/tutorials/get-started/)
+> **Further reading:** [Getting started with snaps – Snapcraft](https://snapcraft.io/docs/tutorials/get-started/)
+
+## Summary
+
+You used `snap download` to fetch the `hello-world` snap without installing it. The result is two files: the snap package (a SquashFS image) and a signed assertions bundle. In the next step you will use these files to install the snap locally.

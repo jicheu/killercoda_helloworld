@@ -1,10 +1,17 @@
 # Step 4 – Explore the snap file format
 
-A `.snap` file is a read-only **SquashFS** filesystem image. SquashFS is a compressed, read-only Linux filesystem often used for embedded systems and live media — and it is the foundation of the snap container format.
+## Objectives
+
+In this step you will:
+
+- Confirm that a `.snap` file is a standard SquashFS filesystem image
+- Understand why snaps use SquashFS and what that means for runtime behaviour
+
+## Required tools
+
+The `file` command is a standard utility already present on Ubuntu. No installation is needed.
 
 ## Check the file type
-
-Use the `file` command to confirm:
 
 ```bash
 file hello-world_*.snap
@@ -16,12 +23,26 @@ The output will look similar to:
 hello-world_29.snap: Squashfs filesystem, little endian, version 4.0, 19330 bytes, 10 inodes, blocksize: 131072 bytes, created: Wed Apr 17 15:16:46 2019
 ```
 
-This confirms the snap is a standard SquashFS image. Snapd mounts it as a loopback device when the snap is installed, which is why snaps are read-only at runtime.
+This confirms the snap is a standard **SquashFS** compressed filesystem image.
 
 ## Why SquashFS?
 
-- **Compression** – snaps are smaller on disk and download faster.
-- **Read-only integrity** – the filesystem cannot be modified at runtime, which supports the snap security model.
-- **Atomic updates** – a new revision is a new SquashFS image, so rollback is trivial.
+When snapd installs a snap it mounts the SquashFS image as a read-only loopback device under `/snap/<name>/<revision>/`. This design has three important consequences:
+
+| Property | Effect |
+|---|---|
+| **Read-only at runtime** | The snap's files cannot be modified while it is running — a key part of the snap security model |
+| **Compressed** | Snaps are smaller on disk and download faster than equivalent tarballs |
+| **Atomic updates** | A new revision is a new SquashFS image; rolling back means re-mounting the previous image |
+
+You can verify that the installed snap is mounted as a loopback device:
+
+```bash
+mount | grep hello-world
+```{{exec}}
 
 > **Further reading:** [Snap documentation overview – Snapcraft](https://snapcraft.io/docs/)
+
+## Summary
+
+A `.snap` file is nothing more than a SquashFS image. snapd mounts it read-only at install time, which gives snaps their integrity guarantees and makes rollbacks trivial. In the next step you will extract the image and explore its internal directory layout.

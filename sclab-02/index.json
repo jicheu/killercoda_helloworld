@@ -3,7 +3,8 @@
   "description": "Learn the internals of snap packages: download, inspect assertions, explore the SquashFS filesystem, and repack snaps.",
   "details": {
     "intro": {
-      "text": "intro.md"
+      "text": "intro.md",
+      "background": "background.sh"
     },
     "steps": [
       {
@@ -35,7 +36,10 @@
       "text": "finish.md"
     }
   },
+  "environment": {
+    "uilayout": "terminal"
+  },
   "backend": {
-    "imageid": "ubuntu"
+    "imageid": "ubuntu:26.04"
   }
 }
