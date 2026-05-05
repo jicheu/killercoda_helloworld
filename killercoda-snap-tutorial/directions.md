@@ -8,7 +8,7 @@ This tutorial is a step by step exercise to create a strictly confined snap from
 The tutorial will use Ubuntu 26.04 VM
 
 ## General directions
-1. All the instructions you are putting need to be referenced with an official documentation from canonical.com or ubuntu.com only. Don't use any other source
+1. All the instructions you are putting need to be referenced with an official documentation from canonical.com, snapcraft.io or ubuntu.com only. Don't use any other source
 2. Check if the commands are available on the target VM. For instance, killercoda ubuntu 24 VM does not come with snapcraft installed, and you'll need to install snapd first
 3. When modifying a previously created file, donc offer to overwrite it but use a patching mechanism so that the trainee can see what changed.
 4. If you need to mention a concept such as confinement, interfaces, always give an official documentation reference.
