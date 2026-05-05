@@ -6,6 +6,8 @@ We will verify that our snap runs smoothly on a minimalistic [Ubuntu Core](https
 ## Install Tools
 QEMU and the Ubuntu Core 24 image have been installed and downloaded in the background for you to save time! 
 
+In real life, you would have to install `qemu` with apt, and download the image from [Ubuntu Archive](https://cdimage.ubuntu.com/ubuntu-core/24/stable/current/)
+
 You can verify the image is ready:
 
 ```bash

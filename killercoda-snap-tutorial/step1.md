@@ -4,7 +4,8 @@
 In this step, we will create a C++ program that fetches a random inspirational message from a free web API and writes it to a file provided by the user.
 
 ## Install Tools
-We need a C++ compiler to build our application. Run the following command to install `g++` and ensure `curl` is available:
+In order to save time, I've installed `g++` and `curl` for you. In the real world, you would have to run:
+
 
 ```bash
 sudo apt update && sudo apt install -y g++ curl
