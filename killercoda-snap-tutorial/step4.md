@@ -1,50 +1,45 @@
 # Step 4: Emulated Core Image Deployment
 
 ## Objectives
-We will verify that our snap runs smoothly on a minimalistic [Ubuntu Core](https://ubuntu.com/core/docs) environment. Ubuntu Core is an entirely snap-based operating system designed for IoT and embedded environments. We'll use LXD to launch a virtual machine running Ubuntu Core.
+We will verify that our snap runs smoothly on a minimalistic [Ubuntu Core](https://ubuntu.com/core/docs) environment. Ubuntu Core is an entirely snap-based operating system designed for IoT and embedded environments. We'll use [QEMU](https://ubuntu.com/core/docs/testing-with-qemu) to emulate the Core image, providing a robust testing environment regardless of hypervisor constraints.
 
 ## Install Tools
-Ensure `lxd` is installed (it usually comes pre-installed on modern Ubuntu server images).
+QEMU and the Ubuntu Core 24 image have been installed and downloaded in the background for you to save time! 
+
+You can verify the image is ready:
+
+```bash
+ls -lh /root/ubuntu-core-24-amd64.img
+```{{execute}}
+
+*(Note: If the file is still an `.xz` or missing, wait a few moments for the background download to finish).*
 
 ## Achieve Objectives
-Initialize LXD and launch an Ubuntu Core 24 VM. We use the `ubuntu:` remote with the `core24` image:
+We will launch the Ubuntu Core virtual machine using QEMU. We use host forwarding (`hostfwd`) so we can SSH into the VM later:
 
 ```bash
-lxd init --auto
-lxc launch ubuntu:core24 core-vm --vm
+qemu-system-x86_64 -smp 2 -m 2048 -accel kvm -accel tcg \
+  -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
+  -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
+  -nographic
 ```{{execute}}
 
-Wait for the VM to fully boot and its internal snapd service to become ready:
+When Ubuntu Core boots for the first time, it will present `console-conf`. Follow the on-screen prompts to configure the network and enter your Ubuntu SSO (Launchpad) email address. This will automatically inject your SSH keys into the VM.
+
+Once configured, you can open a second terminal tab and push your snap to the VM:
 
 ```bash
-sleep 15
-lxc exec core-vm -- snap wait system seed.loaded
-```{{execute}}
+scp -P 8022 inspire-me_1.0_amd64.snap <your-sso-username>@localhost:
+```
 
-Push our compiled `.snap` file to the Core VM and install it. Note that we push it to `/var/tmp/` because the root filesystem on Ubuntu Core is strictly read-only:
-
-```bash
-lxc file push inspire-me_1.0_amd64.snap core-vm/var/tmp/
-lxc exec core-vm -- snap install /var/tmp/inspire-me_1.0_amd64.snap --dangerous
-```{{execute}}
-
-Connect the `network` interface inside the VM so our application can fetch quotes! (Note: The `home` interface isn't typically connected on Ubuntu Core in the same way because there are no traditional user homes, but we will write to the snap's specific writable directory instead).
+Then SSH into the Core VM to install and test it:
 
 ```bash
-lxc exec core-vm -- snap connect inspire-me:network :network
-```{{execute}}
-
-Execute the application inside the Core VM. We will pass the target file path via `stdin` since `lxc exec` might not cleanly handle the interactive prompt:
-
-```bash
-echo "/var/snap/inspire-me/current/core-message.txt" | lxc exec core-vm -- inspire-me
-```{{execute}}
-
-Verify the file was created inside the VM and check the inspirational message:
-
-```bash
-lxc exec core-vm -- cat /var/snap/inspire-me/current/core-message.txt
-```{{execute}}
+ssh -p 8022 <your-sso-username>@localhost
+sudo snap install inspire-me_1.0_amd64.snap --dangerous
+sudo snap connect inspire-me:network :network
+echo "test.txt" | inspire-me
+```
 
 ## Conclusion
-Congratulations! You've successfully built, strictly confined, and tested your snap natively and on an Ubuntu Core environment!
+Congratulations! You've successfully built, strictly confined, and deployed your snap onto an emulated Ubuntu Core system using QEMU!
