@@ -40,6 +40,6 @@
     "uilayout": "terminal"
   },
   "backend": {
-    "imageid": "ubuntu:26.04"
+    "imageid": "ubuntu:24.04"
   }
 }
