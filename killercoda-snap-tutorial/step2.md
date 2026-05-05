@@ -1,8 +1,18 @@
 # Step 2: Create an Unconfined Snap
 
-Now we will package our application as a snap. For initial testing, we'll build it in `devmode` (developer mode), which allows the app to run without the security restrictions of strict confinement.
+## Objectives
+We will package our application as a snap. For initial testing, we will build it in `devmode` ([developer mode](https://snapcraft.io/docs/devmode)). A devmode snap runs without the security restrictions of strict confinement, which is useful for debugging.
 
-Create a `snapcraft.yaml` file by running the following command:
+## Install Tools
+Ensure `snapd` is up to date, and install `snapcraft` to build our snap:
+
+```bash
+sudo apt update && sudo apt install -y snapd
+sudo snap install snapcraft --classic
+```{{execute}}
+
+## Achieve Objectives
+Create a `snapcraft.yaml` file by running the following command. Note that we are adding `curl` to `stage-packages` because our application relies on it to fetch quotes.
 
 ```bash
 cat << 'EOF' > snapcraft.yaml
@@ -25,6 +35,9 @@ parts:
       g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
     build-packages:
       - g++
+    stage-packages:
+      - curl
+      - sed
 
 apps:
   inspire-me:
@@ -32,20 +45,13 @@ apps:
 EOF
 ```{{execute}}
 
-First, we need to ensure `snap` is installed and then install `snapcraft` to build our snap:
-
-```bash
-sudo apt update && sudo apt install -y snapd
-sudo snap install snapcraft --classic
-```{{execute}}
-
-Let's build the snap. This process will set up an environment and compile the application. It may take a minute or two:
+Build the snap. This process will set up an environment and compile the application:
 
 ```bash
 snapcraft pack
 ```{{execute}}
 
-After the build completes, install the snap. Since it is unsigned and we built it with `devmode`, we must use `--devmode` and `--dangerous` to install it:
+After the build completes, install the snap. Since we built it with `devmode`, we must use `--devmode` and `--dangerous` to install it:
 
 ```bash
 sudo snap install inspire-me_1.0_amd64.snap --devmode --dangerous
@@ -57,12 +63,11 @@ Run the application as a snap:
 inspire-me
 ```{{execute}}
 
-Enter `output.txt` when prompted. Because the snap is in `devmode`, it has full access to your filesystem and will successfully write the file to your current directory.
-
-Verify it was created:
+Enter `output.txt` when prompted. Because the snap is in `devmode`, it has full access to your filesystem and will successfully write the file to your current directory. Verify it:
 
 ```bash
 cat output.txt
 ```{{execute}}
 
-In the next step, we'll lock down the application using strict confinement.
+## Conclusion
+We have successfully packaged our application as a snap and ran it in `devmode`. In the next step, we will lock down the application using strict confinement.

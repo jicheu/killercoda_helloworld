@@ -1,5 +1,12 @@
 # Congratulations!
 
-You have successfully created a strictly confined snap from a C++ application. 
-You learned how strict confinement restricts an application's access to the system and how to selectively grant permissions using snap interfaces like `home`.
-Finally, you verified your secure package on an emulated Ubuntu Core system using LXD!
+You have successfully completed the **Understanding what confinement means** tutorial! 
+
+In this training, you:
+1. Created a C++ application that fetches external API data.
+2. Built an unconfined (`devmode`) snap for rapid iteration and testing.
+3. Transitioned to strict confinement, observing the restrictions it places on your application.
+4. Resolved access issues by explicitly connecting the `home` and `network` interfaces.
+5. Successfully deployed and tested your strictly confined snap on an emulated Ubuntu Core system using LXD.
+
+You now understand how strict confinement restricts an application's access to the system and how to selectively grant permissions using snap interfaces!

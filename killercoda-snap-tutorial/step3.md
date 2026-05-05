@@ -1,35 +1,17 @@
-# Step 3: Strict Confinement & LXD Deployment
+# Step 3: Strict Confinement
 
-Let's switch our application to strict confinement. In strict mode, the app runs in complete isolation and cannot access the host filesystem (like your home directory) unless explicitly granted permission.
+## Objectives
+We will switch our application to [Strict Confinement](https://snapcraft.io/docs/snap-confinement). In strict mode, the app runs in complete isolation and cannot access the host filesystem (like your home directory) unless explicitly granted permission via [Interfaces](https://snapcraft.io/docs/supported-interfaces).
 
-Update the `snapcraft.yaml` to enforce strict confinement, but *without* any plugs:
+## Install Tools
+No new tools are required for this step. We will use standard Linux utilities like `sed`.
+
+## Achieve Objectives
+Let's modify our existing `snapcraft.yaml` to enforce strict confinement. We will use `sed` to update the `grade` and `confinement` fields:
 
 ```bash
-cat << 'EOF' > snapcraft.yaml
-name: inspire-me
-base: core24
-version: '1.0'
-summary: A C++ app that writes inspirational quotes
-description: |
-  This application asks for a filename and writes a random 
-  inspirational quote to it.
-
-grade: stable
-confinement: strict
-
-parts:
-  inspire:
-    plugin: nil
-    source: .
-    override-build: |
-      g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
-    build-packages:
-      - g++
-
-apps:
-  inspire-me:
-    command: inspire_me
-EOF
+sed -i 's/grade: devel/grade: stable/' snapcraft.yaml
+sed -i 's/confinement: devmode/confinement: strict/' snapcraft.yaml
 ```{{execute}}
 
 Clean the previous build and rebuild the snap:
@@ -39,7 +21,7 @@ snapcraft clean
 snapcraft pack
 ```{{execute}}
 
-Install the updated, strictly confined snap:
+Install the updated, strictly confined snap (note we no longer use `--devmode`):
 
 ```bash
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
@@ -54,39 +36,14 @@ inspire-me
 You should see an error similar to: **"Error: Could not open file strict.txt for writing."**
 This happens because the strictly confined snap does not have permission to access your home directory by default!
 
-## Connecting the Home Interface
+### Connecting the Home Interface
 
-To fix this, we need to explicitly connect the interface that grants access to the home directory. The `snapcraft.yaml` doesn't have the `home` plug specified yet. Let's add it.
+To fix this, we need to explicitly connect the interface that grants access to the home directory. Let's append the `home` plug to our `snapcraft.yaml`:
 
 ```bash
-cat << 'EOF' > snapcraft.yaml
-name: inspire-me
-base: core24
-version: '1.0'
-summary: A C++ app that writes inspirational quotes
-description: |
-  This application asks for a filename and writes a random 
-  inspirational quote to it.
-
-grade: stable
-confinement: strict
-
-parts:
-  inspire:
-    plugin: nil
-    source: .
-    override-build: |
-      g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
-    build-packages:
-      - g++
-
-apps:
-  inspire-me:
-    command: inspire_me
-    plugs:
-      - home
-EOF
+sed -i '/command: inspire_me/a \    plugs:\n      - home\n      - network' snapcraft.yaml
 ```{{execute}}
+*(Note: We also added `network` because strict snaps need explicit permission to make network requests, which `curl` requires!)*
 
 Rebuild and install the snap one final time:
 
@@ -95,10 +52,11 @@ snapcraft pack
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
 ```{{execute}}
 
-Now, explicitly connect the `home` interface to grant permission (some snaps auto-connect this, but it's good practice to ensure it's connected during local testing):
+Explicitly connect the interfaces to grant permission:
 
 ```bash
 sudo snap connect inspire-me:home :home
+sudo snap connect inspire-me:network :network
 ```{{execute}}
 
 Run it again and save the file in your home directory:
@@ -109,43 +67,5 @@ inspire-me
 
 When prompted, enter `strict-working.txt`. It should now successfully write the file!
 
-## Running on an Emulated Core Image via LXD
-
-Finally, let's verify that our snap runs smoothly on a minimalistic Ubuntu Core environment. We'll use LXD to launch a virtual machine running Ubuntu Core.
-
-First, initialize LXD if it isn't already, and launch an Ubuntu Core 24 VM. This might take a minute or two to start up fully:
-
-```bash
-lxd init --auto
-lxc launch ubuntu-core:24 core-vm --vm
-```{{execute}}
-
-Wait for the VM to fully boot and its internal snapd service to become ready. We can monitor it:
-
-```bash
-sleep 15
-lxc exec core-vm -- snap wait system seed.loaded
-```{{execute}}
-
-Now, push our compiled `.snap` file to the Core VM and install it:
-
-```bash
-lxc file push inspire-me_1.0_amd64.snap core-vm/root/
-lxc exec core-vm -- snap install /root/inspire-me_1.0_amd64.snap --dangerous
-```{{execute}}
-
-Execute the application inside the Core VM!
-
-```bash
-lxc exec core-vm -- inspire-me
-```{{execute}}
-
-When prompted, you can enter `/var/snap/inspire-me/current/core-message.txt`. Because we run it as root, and we write to the snap's specific app data directory, we know for a fact it has permissions even on Ubuntu Core!
-
-Verify the file was created inside the VM:
-
-```bash
-lxc exec core-vm -- cat /var/snap/inspire-me/current/core-message.txt
-```{{execute}}
-
-Congratulations! You've successfully built, strictly confined, and tested your snap natively and on an Ubuntu Core environment!
+## Conclusion
+We learned how strict confinement restricts an application's access and how to selectively grant permissions using snap interfaces like `home` and `network`. Next, we will run our snap on an emulated Ubuntu Core system.

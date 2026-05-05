@@ -27,11 +27,19 @@ EOF
 
 ### Build the Snap
 Now, let's build it. This will take a minute as it sets up the build environment:
-`snapcraft pack`{{execute}}
+```bash
+snapcraft pack
+```{{execute}}
 
 ### Install and Test
 Once finished, install your local snap file:
-`sudo snap install my-hello-snap_0.1_amd64.snap --dangerous`{{execute}}
+```bash
+sudo snap install \
+  my-hello-snap_0.1_amd64.snap \
+  --dangerous
+```{{execute}}
 
 Run it:
-`my-hello-snap.hello`{{execute}}
+```bash
+my-hello-snap.hello
+```{{execute}}

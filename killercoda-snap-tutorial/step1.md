@@ -1,28 +1,53 @@
 # Step 1: Create a C++ Application
 
-Let's begin by creating a simple C++ program. This program will prompt the user for a file name and then write a randomly selected inspirational message to that file.
+## Objectives
+In this step, we will create a C++ program that fetches a random inspirational message from a free web API and writes it to a file provided by the user.
 
-Create a file named `main.cpp` using your favorite text editor, or just run the following command to generate it:
+## Install Tools
+We need a C++ compiler to build our application. Run the following command to install `g++` and ensure `curl` is available:
+
+```bash
+sudo apt update && sudo apt install -y g++ curl
+```{{execute}}
+
+## Achieve Objectives
+Create a file named `main.cpp` by running the following command. The application uses `popen` to execute a `curl` command to a public API and extracts the inspirational quote.
 
 ```bash
 cat << 'EOF' > main.cpp
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <vector>
-#include <cstdlib>
-#include <ctime>
+#include <cstdio>
+#include <memory>
+#include <array>
+
+// Helper function to execute a system command and return its output
+std::string exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        return "Could not fetch quote.";
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    // Remove trailing newline if present
+    if (!result.empty() && result.back() == '\n') {
+        result.pop_back();
+    }
+    return result;
+}
 
 int main() {
-    std::vector<std::string> messages = {
-        "Believe you can and you're halfway there.",
-        "The only way to do great work is to love what you do.",
-        "Success is not final, failure is not fatal: it is the courage to continue that counts.",
-        "Act as if what you do makes a difference. It does."
-    };
-
-    std::srand(std::time(0));
-    std::string message = messages[std::rand() % messages.size()];
+    // Fetch a random inspirational quote using curl
+    std::string command = "curl -s https://zenquotes.io/api/random | sed -n 's/.*\"q\":\"\\([^\"]*\\)\".*/\\1/p'";
+    std::string message = exec(command.c_str());
+    
+    if (message.empty()) {
+        message = "Keep calm and snap on.";
+    }
 
     std::cout << "Enter the filename to write the message to: ";
     std::string filename;
@@ -43,19 +68,18 @@ int main() {
 EOF
 ```{{execute}}
 
-Now, let's compile and run the application to verify it works correctly natively.
+Compile and run the application to verify it works natively:
 
 ```bash
 g++ main.cpp -o inspire_me
 ./inspire_me
 ```{{execute}}
 
-When prompted, enter a filename like `test.txt`.
-
-You can view the generated file with:
+When prompted, enter a filename like `test.txt`. View the generated file with:
 
 ```bash
 cat test.txt
 ```{{execute}}
 
-Once you've verified the application works natively, proceed to the next step.
+## Conclusion
+We have created a C++ application that fetches an external resource using `curl` and writes it to the filesystem. Next, we will learn how to package this application as a snap.

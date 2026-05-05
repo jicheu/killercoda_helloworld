@@ -1,5 +1,5 @@
 {
-  "title": "Creating a Strictly Confined Snap",
+  "title": "Understanding what confinement means",
   "description": "Learn how to build a strictly confined snap from a C++ application and deploy it on an Ubuntu Core LXD environment.",
   "details": {
     "steps": [
@@ -12,8 +12,12 @@
         "text": "step2.md"
       },
       {
-        "title": "Strict Confinement & LXD Deployment",
+        "title": "Strict Confinement",
         "text": "step3.md"
+      },
+      {
+        "title": "Emulated Core Image Deployment",
+        "text": "step4.md"
       }
     ],
     "intro": {
