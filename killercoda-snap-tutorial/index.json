@@ -1,31 +1,23 @@
 {
   "title": "Understanding what confinement means",
-  "description": "Learn how to build a strictly confined snap from a C++ application and deploy it on an emulated Ubuntu Core system using QEMU.",
+  "description": "Learn how to build a strictly confined snap from a C++ application, then find out how to deploy it to Ubuntu Core on your own hardware.",
   "details": {
     "steps": [
       {
-        "title": "Prepare Ubuntu SSO credentials",
+        "title": "Create a C++ Application",
         "text": "step1.md"
       },
       {
-        "title": "Start Ubuntu Core in the background",
+        "title": "Create an Unconfined Snap",
         "text": "step2.md"
       },
       {
-        "title": "Create a C++ Application",
+        "title": "Strict Confinement",
         "text": "step3.md"
       },
       {
-        "title": "Create an Unconfined Snap",
+        "title": "Going further — deploying to Ubuntu Core",
         "text": "step4.md"
-      },
-      {
-        "title": "Strict Confinement",
-        "text": "step5.md"
-      },
-      {
-        "title": "Deploy and test the snap on Ubuntu Core",
-        "text": "step6.md"
       }
     ],
     "intro": {

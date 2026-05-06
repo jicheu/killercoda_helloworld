@@ -1,89 +1,130 @@
-# Step 4: Create an Unconfined Snap
+# Step 4: Going further — deploying to Ubuntu Core
 
 ## Objectives
 
-We will package our application as a snap. For initial testing, we will build it in `devmode` ([developer mode](https://snapcraft.io/docs/devmode)). A devmode snap runs without the security restrictions of strict confinement, which is useful for debugging.
+In this step you will:
 
-> **Reminder:** Ubuntu Core is still booting in Tab 2. Keep working here in Tab 1.
+- Understand what [Ubuntu Core](https://ubuntu.com/core) is and why it is the natural deployment target for strictly confined snaps
+- Know the prerequisites needed before deploying to Ubuntu Core
+- Have ready-to-use instructions for two deployment paths: QEMU on your own machine, and Raspberry Pi
 
-## Install Tools
+## Required tools
 
-Ensure `snapd` is up to date, and install `snapcraft` to build our snap:
+This step is a reference guide — no commands run in this terminal. All instructions below apply to **your own machine** outside this lab environment.
 
-```bash
-sudo apt update && sudo apt install -y snapd
-sudo snap install snapcraft --classic
-```{{execute}}
+> **Why not here?**
+> Ubuntu Core runs as a full OS image. Emulating it with QEMU requires hardware-assisted virtualisation (KVM on Linux, HVF on macOS). This shared lab environment does not expose KVM, so Ubuntu Core cannot be emulated here. The snap you built in the previous steps is fully ready — you just need a KVM-capable host to deploy it.
 
-## Create the snap
+## What is Ubuntu Core?
 
-Create a `snapcraft.yaml` file. Note that `curl` is added to `stage-packages` because our application relies on it to fetch quotes:
+[Ubuntu Core](https://ubuntu.com/core) is a minimal, fully snap-based version of Ubuntu designed for IoT and embedded devices. There is no `apt`, no traditional package manager — every piece of software, including the kernel and base OS components, is delivered and updated as a snap. Strict confinement is enforced by default.
 
-```bash
-cat << 'EOF' > snapcraft.yaml
-name: inspire-me
-base: core24
-version: '1.0'
-summary: A C++ app that writes inspirational quotes
-description: |
-  This application asks for a filename and writes a random 
-  inspirational quote to it.
+The snap you built in Step 3 is already compatible with Ubuntu Core. The confinement model is identical to what you tested here.
 
-grade: devel
-confinement: devmode
+> **Further reading:** [Ubuntu Core documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs)
 
-parts:
-  inspire:
-    plugin: dump
-    source: .
-    override-build: |
-      g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
-    build-packages:
-      - g++
-    stage-packages:
-      - curl
-      - sed
+## Prerequisite: Ubuntu SSO account and SSH key
 
-apps:
-  inspire-me:
-    command: inspire_me
-EOF
-```{{execute}}
+Ubuntu Core uses [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) for first-boot device provisioning. It fetches your SSH public key from your Launchpad profile and injects it into the device, making your Ubuntu SSO **username** the login name.
 
-Build the snap:
+Before booting any Ubuntu Core image you must:
+
+1. Create a free account at [login.ubuntu.com](https://login.ubuntu.com) and note your username.
+2. Generate an SSH key pair if you don't have one:
+   ```bash
+   ssh-keygen -t ed25519 -C "ubuntu-core" -N "" -f ~/.ssh/id_ed25519
+   ```
+3. Upload your public key to Launchpad: go to `https://launchpad.net/~YOUR_USERNAME/+editsshkeys`, paste the contents of `~/.ssh/id_ed25519.pub`, and click **Import**.
+
+> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://documentation.ubuntu.com/core/how-to-guides/manage-ubuntu-core/test-on-qemu/)
+
+---
+
+## Option 1: QEMU on your own machine (Linux with KVM)
+
+### Install dependencies
 
 ```bash
-snapcraft pack --destructive-mode
-```{{execute}}
+sudo apt install -y qemu-system-x86 ovmf
+```
 
-> **Why `--destructive-mode`?**
-> In this tutorial we pass `--destructive-mode` so that Snapcraft builds directly on the host, which is much faster inside a Killercoda VM.
-> In real-world usage you would simply run:
-> ```
-> snapcraft
-> ```
-> Without this flag, Snapcraft automatically spins up an isolated build container (using **LXD** or **Multipass**) that exactly matches the snap's `base`. This guarantees a clean, reproducible build environment and prevents host-system libraries from leaking into the snap — which is what you always want in production.
->
-> **Further reading:** [Build options – Snapcraft](https://snapcraft.io/docs/build-options)
-
-Install the snap. Since we built it with `devmode`, we must use `--devmode` and `--dangerous`:
+### Download the Ubuntu Core 24 image
 
 ```bash
-sudo snap install inspire-me_1.0_amd64.snap --devmode --dangerous
-```{{execute}}
+wget https://cdimage.ubuntu.com/ubuntu-core/24/stable/current/ubuntu-core-24-amd64.img.xz
+unxz ubuntu-core-24-amd64.img.xz
+cp /usr/share/OVMF/OVMF_VARS_4M.ms.fd ~/OVMF_VARS_4M.ms.fd
+```
 
-Run the snap:
-
-```bash
-inspire-me
-```{{execute}}
-
-Enter `output.txt` when prompted. Because the snap is in `devmode`, it has full access to your filesystem and will successfully write the file. Verify it:
+### Launch the VM
 
 ```bash
-cat output.txt
-```{{execute}}
+qemu-system-x86_64 \
+  -enable-kvm \
+  -smp 1 \
+  -m 2048 \
+  -machine q35 \
+  -cpu host \
+  -global ICH9-LPC.disable_s3=1 \
+  -net nic,model=virtio \
+  -net user,hostfwd=tcp::8022-:22 \
+  -drive file=/usr/share/OVMF/OVMF_CODE_4M.secboot.fd,if=pflash,format=raw,unit=0,readonly=on \
+  -drive file=~/OVMF_VARS_4M.ms.fd,if=pflash,format=raw,unit=1 \
+  -drive file=ubuntu-core-24-amd64.img,if=none,format=raw,id=disk1 \
+  -device virtio-blk-pci,drive=disk1,bootindex=1 \
+  -serial mon:stdio
+```
+
+### Complete console-conf and deploy
+
+When `console-conf` appears, enter your Ubuntu SSO email address. Once the device is configured, copy your snap and install it:
+
+```bash
+scp -P 8022 inspire-me_1.0_amd64.snap YOUR_SSO_USERNAME@localhost:
+ssh -p 8022 YOUR_SSO_USERNAME@localhost \
+  "sudo snap install inspire-me_1.0_amd64.snap --dangerous && \
+   sudo snap connect inspire-me:home :home && \
+   sudo snap connect inspire-me:network :network && \
+   inspire-me"
+```
+
+> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://documentation.ubuntu.com/core/how-to-guides/manage-ubuntu-core/test-on-qemu/)
+
+---
+
+## Option 2: Raspberry Pi
+
+Ubuntu Core 24 runs on Raspberry Pi 2, 3, 4, and 5.
+
+1. Download the appropriate image from [ubuntu.com/download/raspberry-pi-core](https://ubuntu.com/download/raspberry-pi-core).
+2. Flash it to a microSD card:
+   ```bash
+   xzcat ubuntu-core-24-arm64+raspi.img.xz | sudo dd of=/dev/sdX bs=32M status=progress
+   ```
+   *(Replace `/dev/sdX` with your card device — check with `lsblk`.)*
+3. Insert the card, boot the Pi, and complete `console-conf` over a monitor and keyboard or serial console.
+4. Once configured, copy and install your snap via SSH:
+   ```bash
+   scp inspire-me_1.0_amd64.snap YOUR_SSO_USERNAME@<pi-ip>:
+   ssh YOUR_SSO_USERNAME@<pi-ip> \
+     "sudo snap install inspire-me_1.0_amd64.snap --dangerous && \
+      sudo snap connect inspire-me:home :home && \
+      sudo snap connect inspire-me:network :network && \
+      inspire-me"
+   ```
+
+> **Note:** The Raspberry Pi image is `arm64`. The snap built in this tutorial targets `amd64`. To deploy on a Pi, rebuild the snap on an arm64 machine or cross-compile using `snapcraft remote-build`. See [Remote build – Snapcraft](https://snapcraft.io/docs/remote-build).
+
+> **Further reading:** [Ubuntu Core on Raspberry Pi – ubuntu.com/core/docs](https://ubuntu.com/core/docs/install-raspberry-pi)
+
+---
+
+## Option 3: Other certified hardware
+
+Ubuntu Core is certified on a range of boards and devices beyond Raspberry Pi.
+
+> **Further reading:** [Supported platforms – ubuntu.com/core/docs](https://ubuntu.com/core/docs/supported-platforms)
 
 ## Conclusion
 
-The application is now packaged as a snap and running in `devmode`. In the next step, you will enforce strict confinement and observe what happens when the snap tries to access the filesystem without permission.
+You have all the tools to deploy your strictly confined snap to a real Ubuntu Core environment. The snap behaves identically on Ubuntu Core as it did on this host — strict confinement, interface connections, and all. The only difference is that on Ubuntu Core there is nothing else: every piece of software runs as a snap.

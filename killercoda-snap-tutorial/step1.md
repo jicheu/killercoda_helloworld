@@ -1,60 +1,89 @@
-# Step 1: Prepare your Ubuntu SSO credentials
+# Step 1: Create a C++ Application
 
 ## Objectives
 
 In this step you will:
 
-- Understand why Ubuntu Core requires an Ubuntu SSO account for first-boot configuration
-- Create an Ubuntu One account (if you don't have one already)
-- Generate an SSH key pair on this machine and upload the public key to your Launchpad profile
-
-> **Why is this needed?**
-> Ubuntu Core uses [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) for first-boot device provisioning. During this process it contacts your Ubuntu SSO / Launchpad profile and fetches your SSH public key, which it injects into the system. Without this, you will not be able to SSH into the VM after boot.
->
-> **Further reading:** [console-conf documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs/use-console-conf)
+- Write a C++ program that fetches a random inspirational message from a web API and writes it to a file
+- Compile and run it natively to confirm it works before packaging it as a snap
 
 ## Install Tools
 
-No additional packages are needed. `ssh-keygen` and `cat` are pre-installed on Ubuntu.
-
-## Set up your Ubuntu One account and SSH key
-
-### 1. Create an Ubuntu One account
-
-If you do not already have one, create a free account at [login.ubuntu.com](https://login.ubuntu.com). Take note of your **username** — it becomes the login name on the Ubuntu Core device.
-
-### 2. Generate an SSH key pair
-
-Check whether an SSH key pair already exists on this machine:
+`g++` and `curl` have been installed for you by the background script. In the real world you would run:
 
 ```bash
-ls ~/.ssh/id_*.pub 2>/dev/null && echo "Key found" || echo "No key found — generating one"
-```{{execute}}
+sudo apt update && sudo apt install -y g++ curl
+```
 
-If no key was found, generate one now:
+## Create the application
 
-```bash
-ssh-keygen -t ed25519 -C "ubuntu-core-lab" -N "" -f ~/.ssh/id_ed25519
-```{{execute}}
-
-Display your public key:
+Create a file named `main.cpp`:
 
 ```bash
-cat ~/.ssh/id_ed25519.pub
+cat << 'EOF' > main.cpp
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdio>
+#include <memory>
+#include <array>
+
+std::string exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        return "Could not fetch quote.";
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    if (!result.empty() && result.back() == '\n') {
+        result.pop_back();
+    }
+    return result;
+}
+
+int main() {
+    std::string command = "curl -s https://zenquotes.io/api/random | sed -n 's/.*\"q\":\"\\([^\"]*\\)\".*/\\1/p'";
+    std::string message = exec(command.c_str());
+
+    if (message.empty()) {
+        message = "Keep calm and snap on.";
+    }
+
+    std::cout << "Enter the filename to write the message to: ";
+    std::string filename;
+    std::cin >> filename;
+
+    std::ofstream outfile(filename);
+    if (outfile.is_open()) {
+        outfile << message << std::endl;
+        outfile.close();
+        std::cout << "Message written successfully to " << filename << std::endl;
+    } else {
+        std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+EOF
 ```{{execute}}
 
-Copy the entire output line — you will paste it into Launchpad in the next sub-step.
+## Compile and test
 
-### 3. Upload your public key to Launchpad
+```bash
+g++ main.cpp -o inspire_me
+./inspire_me
+```{{execute}}
 
-1. Go to [launchpad.net](https://launchpad.net) and sign in with your Ubuntu One credentials.
-2. Navigate to **Your profile → SSH keys**, or open `https://launchpad.net/~YOUR_USERNAME/+editsshkeys` directly.
-3. Paste the public key you copied above and click **Import**.
+When prompted, enter a filename such as `test.txt`. Verify the output:
 
-`console-conf` will contact Launchpad during first boot and inject this key automatically.
+```bash
+cat test.txt
+```{{execute}}
 
-> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://ubuntu.com/core/docs/testing-with-qemu)
+## Conclusion
 
-## Summary
-
-Your Ubuntu One account is ready and your SSH public key is registered on Launchpad. In the next step you will start the Ubuntu Core VM in a second terminal tab so it boots in the background while you work through the rest of the tutorial.
+The application fetches an external resource with `curl` and writes to the filesystem — two operations that will require explicit snap interface permissions once we enforce strict confinement. Next, you will package it as a snap in `devmode` to test it without restrictions first.
