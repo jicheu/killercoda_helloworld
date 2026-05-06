@@ -22,30 +22,6 @@ In this scenario you:
 | `snap pack` | Repacks a directory into a `.snap` file — useful for debugging |
 | `--dangerous` | Bypasses assertion/signature checks for local or unsigned snaps |
 
-## Cleanup
-
-To remove the snaps installed during this lab:
-
-```bash
-snap remove hello-world
-```
-
-## Troubleshooting
-
-| Problem | Solution |
-|---|---|
-| `error: cannot communicate with server` | Run `sudo systemctl start snapd` and wait a few seconds |
-| `snap download` times out | Check network connectivity; retry with `--retry=3` |
-| `snap install` fails with assertion error | Make sure you ran `snap ack` on the `.assert` file first |
-| `unsquashfs` not found | Install with `apt install squashfs-tools` |
-
-| Problem | Solution |
-|---|---|
-| `error: cannot communicate with server` | Run `sudo systemctl start snapd` and wait a few seconds |
-| `snap download` times out | Check network connectivity; retry the command |
-| `snap install` fails with assertion error | Make sure you ran `snap ack` on the `.assert` file first |
-| `unsquashfs` not found | Install with `apt install squashfs-tools` |
-
 ## Next steps
 
 - [Craft your first snap – Snapcraft tutorial](https://documentation.ubuntu.com/snapcraft/stable/tutorials/craft-a-snap/)
