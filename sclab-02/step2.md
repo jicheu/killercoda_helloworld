@@ -17,7 +17,7 @@ No additional tools are needed. `snap` is already available from the previous st
 Before snapd will install a locally downloaded snap, it must be able to verify the snap against its chain of trust. The `snap ack` command reads the `.assert` file and imports the signed assertion documents into snapd's local database.
 
 ```bash
-snap ack hello-world_*.assert
+snap ack hello-world_*.assert && echo "Assertions accepted" || echo "Failed to acknowledge assertions" >&2 # Ref: https://documentation.ubuntu.com/core/reference/assertions/
 ```{{exec}}
 
 If the command produces no output, the assertions were accepted successfully.

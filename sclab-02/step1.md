@@ -9,13 +9,9 @@ In this step you will:
 
 ## Required tools
 
-`snapd` (which provides the `snap` CLI) is pre-installed and started in the background for you. Confirm it is ready:
+`snapd` (which provides the `snap` CLI) is pre-installed and started in the background for you.
 
-```bash
-snap version
-```{{exec}}
-
-You should see output that includes a `snap` version line. If the command is not found yet, wait a few seconds and retry — the background setup script is still running.
+`snapd` is pre‑installed by `background.sh` – no extra install needed.
 
 ## Download the snap
 
@@ -30,10 +26,11 @@ You should see output similar to:
 ```
 Fetching snap "hello-world"
 Fetching assertions for "hello-world"
-Install the snap with:
-    snap ack hello-world_29.assert
-    snap install hello-world_29.snap
 ```
+
+```bash
+# Tools (g++, curl) are already installed by background.sh – you can skip this step in Killercoda.
+```{{execute}}
 
 Two files are written to your current directory:
 
