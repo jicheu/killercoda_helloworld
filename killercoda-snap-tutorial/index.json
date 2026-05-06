@@ -14,15 +14,15 @@
       {
         "title": "Strict Confinement",
         "text": "step3.md"
-      },
-      {
-        "title": "Ubuntu SSO Preparation",
-        "text": "step4.md"
-      },
+      },
+      {
+	"title": "Ubuntu SSO Preparation",
+	"text": "step4.md" 
+      },
       {
         "title": "Emulated Core Image Deployment",
         "text": "step5.md"
-      }
+      }
     ],
     "intro": {
       "text": "intro.md",
