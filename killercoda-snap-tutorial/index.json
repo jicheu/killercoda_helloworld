@@ -19,9 +19,9 @@
 	"title": "Ubuntu SSO Preparation",
 	"text": "step4.md" 
       },
-      {
-        "title": "Emulated Core Image Deployment",
-        "text": "step5.md"
+	  {
+		"title": "Emulated Core Image Deployment",        
+		"text": "step5.md"
       }
     ],
     "intro": {
