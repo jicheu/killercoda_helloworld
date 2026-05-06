@@ -1,6 +1,6 @@
 # Snap Packaging Introduction
 
-> **Environment:** Ubuntu 24.04 LTS — `snapd` and `squashfs-tools` are being installed in the background. The first `snap` command in Step 1 will tell you if setup is complete.
+> **Environment:** Ubuntu 24.04 LTS. The required tools (`snapd` and `squashfs-tools`) are configuring in the background.
 
 In this lab you will explore the internals of snap packages by working hands-on with the `hello-world` snap.
 
