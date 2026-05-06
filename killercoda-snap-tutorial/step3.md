@@ -1,73 +1,91 @@
-# Step 3: Strict Confinement
+# Step 3: Create a C++ Application
 
 ## Objectives
-We will switch our application to [Strict Confinement](https://snapcraft.io/docs/snap-confinement). In strict mode, the app runs in complete isolation and cannot access the host filesystem (like your home directory) unless explicitly granted permission via [Interfaces](https://snapcraft.io/docs/supported-interfaces).
+
+In this step you will:
+
+- Write a C++ program that fetches a random inspirational message from a web API and writes it to a file
+- Compile and run it natively to confirm it works before packaging it as a snap
+
+> **Reminder:** Ubuntu Core is booting in Tab 2. You don't need to switch tabs yet — continue here in Tab 1.
 
 ## Install Tools
-No new tools are required for this step. We will use standard Linux utilities like `sed`.
 
-## Achieve Objectives
-Let's modify our existing `snapcraft.yaml` to enforce strict confinement. We will use `sed` to update the `grade` and `confinement` fields:
+`g++` and `curl` have been installed for you by the background script. In the real world you would run:
 
 ```bash
-sed -i 's/grade: devel/grade: stable/' snapcraft.yaml
-sed -i 's/confinement: devmode/confinement: strict/' snapcraft.yaml
-```{{execute}}
+sudo apt update && sudo apt install -y g++ curl
+```
 
-Clean the previous build and rebuild the snap:
+## Create the application
 
-```bash
-snapcraft clean
-snapcraft pack --destructive-mode
-```{{execute}}
-
-> **Reminder:** `--destructive-mode` is used here for speed in this tutorial environment. In production always run `snapcraft` without this flag so the build happens inside an isolated LXD or Multipass container. See [Build options – Snapcraft](https://snapcraft.io/docs/build-options).
-
-Install the updated, strictly confined snap (note we no longer use `--devmode`):
+Create a file named `main.cpp`:
 
 ```bash
-sudo snap install inspire-me_1.0_amd64.snap --dangerous
+cat << 'EOF' > main.cpp
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <cstdio>
+#include <memory>
+#include <array>
+
+std::string exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        return "Could not fetch quote.";
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    if (!result.empty() && result.back() == '\n') {
+        result.pop_back();
+    }
+    return result;
+}
+
+int main() {
+    std::string command = "curl -s https://zenquotes.io/api/random | sed -n 's/.*\"q\":\"\\([^\"]*\\)\".*/\\1/p'";
+    std::string message = exec(command.c_str());
+
+    if (message.empty()) {
+        message = "Keep calm and snap on.";
+    }
+
+    std::cout << "Enter the filename to write the message to: ";
+    std::string filename;
+    std::cin >> filename;
+
+    std::ofstream outfile(filename);
+    if (outfile.is_open()) {
+        outfile << message << std::endl;
+        outfile.close();
+        std::cout << "Message written successfully to " << filename << std::endl;
+    } else {
+        std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
+        return 1;
+    }
+
+    return 0;
+}
+EOF
 ```{{execute}}
 
-Run the strictly confined snap and try to write to `strict.txt`:
+## Compile and test
 
 ```bash
-inspire-me
+g++ main.cpp -o inspire_me
+./inspire_me
 ```{{execute}}
 
-You should see an error similar to: **"Error: Could not open file strict.txt for writing."**
-This happens because the strictly confined snap does not have permission to access your home directory by default!
-
-### Connecting the Home Interface
-
-To fix this, we need to explicitly connect the interface that grants access to the home directory. Let's append the `home` plug to our `snapcraft.yaml`:
+When prompted, enter a filename such as `test.txt`. Verify the output:
 
 ```bash
-sed -i '/command: inspire_me/a \    plugs:\n      - home\n      - network' snapcraft.yaml
+cat test.txt
 ```{{execute}}
-*(Note: We also added `network` because strict snaps need explicit permission to make network requests, which `curl` requires!)*
-
-Rebuild and install the snap one final time:
-
-```bash
-snapcraft pack --destructive-mode  # tutorial shortcut — use plain `snapcraft` in production
-sudo snap install inspire-me_1.0_amd64.snap --dangerous
-```{{execute}}
-
-Explicitly connect the interfaces to grant permission:
-
-```bash
-sudo snap connect inspire-me:home :home
-sudo snap connect inspire-me:network :network
-```{{execute}}
-
-Run it again and save the file in your home directory:
-
-```bash
-inspire-me
-```{{execute}}
-
-When prompted, enter `strict-working.txt`. It should now successfully write the file!
 
 ## Conclusion
-We learned how strict confinement restricts an application's access and how to selectively grant permissions using snap interfaces like `home` and `network`. Next, we will run our snap on an emulated Ubuntu Core system.
+
+The application fetches an external resource with `curl` and writes to the filesystem — two operations that will require explicit snap interface permissions once we enforce strict confinement. Next, you will package it as a snap in devmode to test it without restrictions first.

@@ -4,23 +4,29 @@
 
 In this step you will:
 
+- Verify that Ubuntu Core has finished booting and `console-conf` is complete
 - Copy the strictly confined snap to the Ubuntu Core VM
-- Install it and connect the required interfaces
-- Verify the snap runs correctly on a fully snap-based OS
+- Install it, connect the required interfaces, and confirm it runs correctly
 
-## Install Tools
+## Check Ubuntu Core is ready (Tab 2)
 
-`scp` and `ssh` are pre-installed on Ubuntu. No additional packages are needed.
+Switch to **Tab 2**. The QEMU console should be showing the `console-conf` confirmation screen or an idle login prompt. If `console-conf` is still in progress, complete it now (see Step 2 for the walkthrough).
+
+Once Ubuntu Core is configured, verify SSH access from **Tab 1**:
+
+```bash
+ssh -p 8022 -o StrictHostKeyChecking=no <your-sso-username>@localhost exit && echo "VM ready"
+```{{execute}}
+
+Replace `<your-sso-username>` with the username shown at the end of the `console-conf` wizard.
 
 ## Copy the snap to the VM
 
-From the **host terminal** (not the QEMU console), copy the snap to the VM over the forwarded SSH port:
+From **Tab 1**, copy the snap over the forwarded SSH port:
 
 ```bash
 scp -P 8022 -o StrictHostKeyChecking=no inspire-me_1.0_amd64.snap <your-sso-username>@localhost:
-```
-
-Replace `<your-sso-username>` with your Ubuntu SSO username (shown at the end of the `console-conf` wizard in Step 5).
+```{{execute}}
 
 ## Install and connect interfaces on the VM
 
@@ -28,36 +34,36 @@ SSH into the Ubuntu Core VM:
 
 ```bash
 ssh -p 8022 -o StrictHostKeyChecking=no <your-sso-username>@localhost
-```
+```{{execute}}
 
 Install the snap:
 
 ```bash
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
-```
+```{{execute}}
 
-Connect the `home` and `network` interfaces (strict confinement requires these to be granted explicitly — as you saw in Step 3):
+Connect the `home` and `network` interfaces (strict confinement requires these to be granted explicitly, just as you saw in Step 5):
 
 ```bash
 sudo snap connect inspire-me:home :home
 sudo snap connect inspire-me:network :network
-```
+```{{execute}}
 
 > **Further reading:** [Supported interfaces – Snapcraft](https://snapcraft.io/docs/supported-interfaces)
 
-## Run the snap
+## Run the snap on Ubuntu Core
 
 ```bash
 inspire-me
-```
+```{{execute}}
 
-When prompted, enter `test.txt`. Verify the file was written:
+Enter `test.txt` when prompted. Verify the file was written:
 
 ```bash
 cat test.txt
-```
+```{{execute}}
 
-Type `exit` to return to the host when done.
+Type `exit` to return to the host.
 
 ## Summary
 

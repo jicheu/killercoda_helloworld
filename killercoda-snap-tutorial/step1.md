@@ -1,86 +1,60 @@
-# Step 1: Create a C++ Application
+# Step 1: Prepare your Ubuntu SSO credentials
 
 ## Objectives
-In this step, we will create a C++ program that fetches a random inspirational message from a free web API and writes it to a file provided by the user.
+
+In this step you will:
+
+- Understand why Ubuntu Core requires an Ubuntu SSO account for first-boot configuration
+- Create an Ubuntu One account (if you don't have one already)
+- Generate an SSH key pair on this machine and upload the public key to your Launchpad profile
+
+> **Why is this needed?**
+> Ubuntu Core uses [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) for first-boot device provisioning. During this process it contacts your Ubuntu SSO / Launchpad profile and fetches your SSH public key, which it injects into the system. Without this, you will not be able to SSH into the VM after boot.
+>
+> **Further reading:** [console-conf documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs/use-console-conf)
 
 ## Install Tools
-In order to save time, I've installed `g++` and `curl` for you. In the real world, you would have to run:
 
+No additional packages are needed. `ssh-keygen` and `cat` are pre-installed on Ubuntu.
+
+## Set up your Ubuntu One account and SSH key
+
+### 1. Create an Ubuntu One account
+
+If you do not already have one, create a free account at [login.ubuntu.com](https://login.ubuntu.com). Take note of your **username** — it becomes the login name on the Ubuntu Core device.
+
+### 2. Generate an SSH key pair
+
+Check whether an SSH key pair already exists on this machine:
 
 ```bash
-sudo apt update && sudo apt install -y g++ curl
-```
-
-## Achieve Objectives
-Create a file named `main.cpp` by running the following command. The application uses `popen` to execute a `curl` command to a public API and extracts the inspirational quote.
-
-```bash
-cat << 'EOF' > main.cpp
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstdio>
-#include <memory>
-#include <array>
-
-// Helper function to execute a system command and return its output
-std::string exec(const char* cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
-    if (!pipe) {
-        return "Could not fetch quote.";
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    // Remove trailing newline if present
-    if (!result.empty() && result.back() == '\n') {
-        result.pop_back();
-    }
-    return result;
-}
-
-int main() {
-    // Fetch a random inspirational quote using curl
-    std::string command = "curl -s https://zenquotes.io/api/random | sed -n 's/.*\"q\":\"\\([^\"]*\\)\".*/\\1/p'";
-    std::string message = exec(command.c_str());
-    
-    if (message.empty()) {
-        message = "Keep calm and snap on.";
-    }
-
-    std::cout << "Enter the filename to write the message to: ";
-    std::string filename;
-    std::cin >> filename;
-
-    std::ofstream outfile(filename);
-    if (outfile.is_open()) {
-        outfile << message << std::endl;
-        outfile.close();
-        std::cout << "Message written successfully to " << filename << std::endl;
-    } else {
-        std::cerr << "Error: Could not open file " << filename << " for writing." << std::endl;
-        return 1;
-    }
-
-    return 0;
-}
-EOF
+ls ~/.ssh/id_*.pub 2>/dev/null && echo "Key found" || echo "No key found — generating one"
 ```{{execute}}
 
-Compile and run the application to verify it works natively:
+If no key was found, generate one now:
 
 ```bash
-g++ main.cpp -o inspire_me
-./inspire_me
+ssh-keygen -t ed25519 -C "ubuntu-core-lab" -N "" -f ~/.ssh/id_ed25519
 ```{{execute}}
 
-When prompted, enter a filename like `test.txt`. View the generated file with:
+Display your public key:
 
 ```bash
-cat test.txt
+cat ~/.ssh/id_ed25519.pub
 ```{{execute}}
 
-## Conclusion
-We have created a C++ application that fetches an external resource using `curl` and writes it to the filesystem. Next, we will learn how to package this application as a snap.
+Copy the entire output line — you will paste it into Launchpad in the next sub-step.
+
+### 3. Upload your public key to Launchpad
+
+1. Go to [launchpad.net](https://launchpad.net) and sign in with your Ubuntu One credentials.
+2. Navigate to **Your profile → SSH keys**, or open `https://launchpad.net/~YOUR_USERNAME/+editsshkeys` directly.
+3. Paste the public key you copied above and click **Import**.
+
+`console-conf` will contact Launchpad during first boot and inject this key automatically.
+
+> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://ubuntu.com/core/docs/testing-with-qemu)
+
+## Summary
+
+Your Ubuntu One account is ready and your SSH public key is registered on Launchpad. In the next step you will start the Ubuntu Core VM in a second terminal tab so it boots in the background while you work through the rest of the tutorial.

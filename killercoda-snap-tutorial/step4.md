@@ -1,60 +1,89 @@
-# Step 4: Prepare your Ubuntu SSO credentials
+# Step 4: Create an Unconfined Snap
 
 ## Objectives
 
-In this step you will:
+We will package our application as a snap. For initial testing, we will build it in `devmode` ([developer mode](https://snapcraft.io/docs/devmode)). A devmode snap runs without the security restrictions of strict confinement, which is useful for debugging.
 
-- Understand why Ubuntu Core requires an Ubuntu SSO account for first-boot configuration
-- Create an Ubuntu One account (if you don't have one already)
-- Generate an SSH key pair on this machine and upload the public key to your Launchpad profile
-
-> **Why is this needed?**
-> Ubuntu Core uses [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) for first-boot device provisioning. During this process it contacts your Ubuntu SSO / Launchpad profile and fetches your SSH public key, which it injects into the system. Without this, you will not be able to SSH into the VM after boot.
->
-> **Further reading:** [console-conf documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs/use-console-conf)
+> **Reminder:** Ubuntu Core is still booting in Tab 2. Keep working here in Tab 1.
 
 ## Install Tools
 
-No additional packages are needed. `ssh-keygen` and `cat` are pre-installed on Ubuntu.
-
-## Set up your Ubuntu One account and SSH key
-
-### 1. Create an Ubuntu One account
-
-If you do not already have one, create a free account at [login.ubuntu.com](https://login.ubuntu.com). Take note of your **username** — it becomes the login name on the Ubuntu Core device.
-
-### 2. Generate an SSH key pair
-
-Check whether an SSH key pair already exists on this machine:
+Ensure `snapd` is up to date, and install `snapcraft` to build our snap:
 
 ```bash
-ls ~/.ssh/id_*.pub 2>/dev/null && echo "Key found" || echo "No key found — generating one"
+sudo apt update && sudo apt install -y snapd
+sudo snap install snapcraft --classic
 ```{{execute}}
 
-If no key was found, generate one now:
+## Create the snap
+
+Create a `snapcraft.yaml` file. Note that `curl` is added to `stage-packages` because our application relies on it to fetch quotes:
 
 ```bash
-ssh-keygen -t ed25519 -C "ubuntu-core-lab" -N "" -f ~/.ssh/id_ed25519
+cat << 'EOF' > snapcraft.yaml
+name: inspire-me
+base: core24
+version: '1.0'
+summary: A C++ app that writes inspirational quotes
+description: |
+  This application asks for a filename and writes a random 
+  inspirational quote to it.
+
+grade: devel
+confinement: devmode
+
+parts:
+  inspire:
+    plugin: dump
+    source: .
+    override-build: |
+      g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
+    build-packages:
+      - g++
+    stage-packages:
+      - curl
+      - sed
+
+apps:
+  inspire-me:
+    command: inspire_me
+EOF
 ```{{execute}}
 
-Display your public key:
+Build the snap:
 
 ```bash
-cat ~/.ssh/id_ed25519.pub
+snapcraft pack --destructive-mode
 ```{{execute}}
 
-Copy the entire output line — you will paste it into Launchpad in the next sub-step.
+> **Why `--destructive-mode`?**
+> In this tutorial we pass `--destructive-mode` so that Snapcraft builds directly on the host, which is much faster inside a Killercoda VM.
+> In real-world usage you would simply run:
+> ```
+> snapcraft
+> ```
+> Without this flag, Snapcraft automatically spins up an isolated build container (using **LXD** or **Multipass**) that exactly matches the snap's `base`. This guarantees a clean, reproducible build environment and prevents host-system libraries from leaking into the snap — which is what you always want in production.
+>
+> **Further reading:** [Build options – Snapcraft](https://snapcraft.io/docs/build-options)
 
-### 3. Upload your public key to Launchpad
+Install the snap. Since we built it with `devmode`, we must use `--devmode` and `--dangerous`:
 
-1. Go to [launchpad.net](https://launchpad.net) and sign in with your Ubuntu One credentials.
-2. Navigate to **Your profile → SSH keys**, or open `https://launchpad.net/~YOUR_USERNAME/+editsshkeys` directly.
-3. Paste the public key you copied above and click **Import**.
+```bash
+sudo snap install inspire-me_1.0_amd64.snap --devmode --dangerous
+```{{execute}}
 
-`console-conf` will contact Launchpad during first boot and inject this key automatically.
+Run the snap:
 
-> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://ubuntu.com/core/docs/testing-with-qemu)
+```bash
+inspire-me
+```{{execute}}
 
-## Summary
+Enter `output.txt` when prompted. Because the snap is in `devmode`, it has full access to your filesystem and will successfully write the file. Verify it:
 
-Your Ubuntu One account is ready and your SSH public key is registered on Launchpad. In the next step you will boot the Ubuntu Core image and complete the `console-conf` first-boot wizard.
+```bash
+cat output.txt
+```{{execute}}
+
+## Conclusion
+
+The application is now packaged as a snap and running in `devmode`. In the next step, you will enforce strict confinement and observe what happens when the snap tries to access the filesystem without permission.

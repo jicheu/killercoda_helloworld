@@ -4,23 +4,23 @@
   "details": {
     "steps": [
       {
-        "title": "Create a C++ Application",
+        "title": "Prepare Ubuntu SSO credentials",
         "text": "step1.md"
       },
       {
-        "title": "Create an Unconfined Snap",
+        "title": "Start Ubuntu Core in the background",
         "text": "step2.md"
       },
       {
-        "title": "Strict Confinement",
+        "title": "Create a C++ Application",
         "text": "step3.md"
       },
       {
-        "title": "Prepare Ubuntu SSO credentials",
+        "title": "Create an Unconfined Snap",
         "text": "step4.md"
       },
       {
-        "title": "Boot Ubuntu Core and configure with console-conf",
+        "title": "Strict Confinement",
         "text": "step5.md"
       },
       {

@@ -1,95 +1,89 @@
-# Step 5: Boot Ubuntu Core and configure with console-conf
+# Step 5: Strict Confinement
 
 ## Objectives
 
-In this step you will:
+We will switch our application to [strict confinement](https://snapcraft.io/docs/snap-confinement). In strict mode, the app runs in complete isolation and cannot access the host filesystem or network unless explicitly granted permission via [interfaces](https://snapcraft.io/docs/supported-interfaces).
 
-- Launch the Ubuntu Core 24 VM using QEMU
-- Complete the [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) first-boot wizard using your Ubuntu SSO credentials
-- Verify that SSH access to the VM is working before deploying the snap
+> **Reminder:** Ubuntu Core is booting in Tab 2. By the time you finish this step it should be ready. You will switch to Tab 2 in Step 6.
 
 ## Install Tools
 
-QEMU and the Ubuntu Core 24 image were installed and downloaded in the background at the start of this tutorial. Verify the image is ready:
+No new tools are required. We will use `sed` to patch `snapcraft.yaml`.
+
+## Switch to strict confinement
+
+Modify the `confinement` and `grade` fields in `snapcraft.yaml` using `sed` so you can clearly see what changes:
 
 ```bash
-ls -lh /root/ubuntu-core-24-amd64.img
+sed -i 's/grade: devel/grade: stable/' snapcraft.yaml
+sed -i 's/confinement: devmode/confinement: strict/' snapcraft.yaml
 ```{{execute}}
 
-*(If the file is missing or still ends in `.xz`, wait a few moments for the background script to finish, then retry.)*
-
-## Boot the VM
-
-Ensure the writable OVMF variable store is in place (the background script copies it, but this is a safety check):
+Verify the patch was applied:
 
 ```bash
-ls /root/OVMF_VARS_4M.fd 2>/dev/null || cp /usr/share/OVMF/OVMF_VARS_4M.fd /root/OVMF_VARS_4M.fd
+grep -E 'grade:|confinement:' snapcraft.yaml
 ```{{execute}}
 
-Launch the Ubuntu Core VM. The `-nographic` flag redirects the VM's serial console to your terminal so you can interact with `console-conf`:
+Clean the previous build and rebuild:
 
 ```bash
-qemu-system-x86_64 -smp 2 -m 2048 -accel kvm -accel tcg \
-  -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,unit=0,readonly=on \
-  -drive file=/root/OVMF_VARS_4M.fd,if=pflash,format=raw,unit=1 \
-  -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
-  -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
-  -nographic
+snapcraft clean
+snapcraft pack --destructive-mode
 ```{{execute}}
 
-Ubuntu Core takes about a minute to complete its first-boot initialisation. Wait until the `console-conf` wizard appears on screen.
+> **Reminder:** `--destructive-mode` is used here for speed in this tutorial environment. In production always run `snapcraft` without this flag so the build happens inside an isolated LXD or Multipass container. See [Build options – Snapcraft](https://snapcraft.io/docs/build-options).
 
-## Complete the console-conf wizard
-
-`console-conf` guides you through two screens:
-
----
-
-**Screen 1 — Network**
-
-Ubuntu Core tries to configure networking via DHCP. In QEMU's user-mode networking the network is always available. Press **Enter** to accept and continue.
-
----
-
-**Screen 2 — Ubuntu SSO email**
-
-```
-Please enter your email address to configure your device.
-Email address:
-```
-
-Type the **email address linked to your Ubuntu One account** (the one you registered in Step 4) and press **Enter**.
-
-`console-conf` connects to `login.ubuntu.com`, looks up your Launchpad profile, and injects your SSH public key into the system. Your Ubuntu SSO **username** (not email) becomes the login name on the device.
-
----
-
-**Screen 3 — Confirmation**
-
-Once the key is imported you will see a message similar to:
-
-```
-This device is configured. You can now connect to it via SSH:
-
-    ssh <your-sso-username>@<ip-address>
-```
-
-Note your SSO username shown here — you will use it in the next step.
-
-> **Further reading:** [`console-conf` documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs/use-console-conf)
-
-## Verify SSH access
-
-Open a **second terminal tab** in Killercoda (the first is occupied by the QEMU session). Test the SSH connection using port `8022`, which QEMU forwards to the VM's port 22:
+Install the updated, strictly confined snap (note we no longer use `--devmode`):
 
 ```bash
-ssh -p 8022 -o StrictHostKeyChecking=no <your-sso-username>@localhost
-```
+sudo snap install inspire-me_1.0_amd64.snap --dangerous
+```{{execute}}
 
-Replace `<your-sso-username>` with the username shown on the `console-conf` confirmation screen. If the connection succeeds you are inside the Ubuntu Core VM. Type `exit` to return to the host for now.
+Run the snap and try to write to `strict.txt`:
 
-> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://ubuntu.com/core/docs/testing-with-qemu)
+```bash
+inspire-me
+```{{execute}}
 
-## Summary
+You should see: **"Error: Could not open file strict.txt for writing."**
 
-Ubuntu Core is running in QEMU and accessible over SSH. In the next step you will copy your snap to the VM, install it, and confirm it runs correctly under strict confinement on a fully snap-based OS.
+This is expected — the strictly confined snap has no permission to access your home directory by default.
+
+## Connect the required interfaces
+
+Add the `home` and `network` plugs to `snapcraft.yaml`:
+
+```bash
+sed -i '/command: inspire_me/a \    plugs:\n      - home\n      - network' snapcraft.yaml
+```{{execute}}
+
+*(We need `network` as well because strict snaps require explicit permission for outbound network access, which `curl` uses.)*
+
+Rebuild and reinstall:
+
+```bash
+snapcraft pack --destructive-mode  # tutorial shortcut — use plain `snapcraft` in production
+sudo snap install inspire-me_1.0_amd64.snap --dangerous
+```{{execute}}
+
+Connect the interfaces to grant permission:
+
+```bash
+sudo snap connect inspire-me:home :home
+sudo snap connect inspire-me:network :network
+```{{execute}}
+
+Run the snap again:
+
+```bash
+inspire-me
+```{{execute}}
+
+Enter `strict-working.txt` when prompted — it should now write the file successfully.
+
+> **Further reading:** [Supported interfaces – Snapcraft](https://snapcraft.io/docs/supported-interfaces)
+
+## Conclusion
+
+You learned how strict confinement isolates an application and how to selectively grant permissions using snap interfaces. Your snap is now ready to deploy. In the next step, switch to Tab 2 to check that Ubuntu Core has finished booting, then deploy your snap to it.
