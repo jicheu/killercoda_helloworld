@@ -19,9 +19,16 @@ ls -lh /root/ubuntu-core-24-amd64.img
 ## Achieve Objectives
 We will launch the Ubuntu Core virtual machine using QEMU. Ubuntu Core requires a UEFI boot environment, so we include OVMF (Open Virtual Machine Firmware) as a `pflash` drive. We also use host forwarding (`hostfwd`) so we can SSH into the VM later. For official guidance, refer to [Testing Ubuntu Core with QEMU](https://ubuntu.com/core/docs/testing-with-qemu).
 
+First, copy the OVMF variable store to a writable location (QEMU needs to write EFI variables to it at runtime):
+
+```bash
+cp /usr/share/OVMF/OVMF_VARS_4M.fd /root/OVMF_VARS_4M.fd
+```{{execute}}
+
 ```bash
 qemu-system-x86_64 -smp 2 -m 2048 -accel kvm -accel tcg \
-  -drive file=/usr/share/OVMF/OVMF_CODE.fd,if=pflash,format=raw,unit=0,readonly=on \
+  -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,unit=0,readonly=on \
+  -drive file=/root/OVMF_VARS_4M.fd,if=pflash,format=raw,unit=1 \
   -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
   -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
   -nographic
