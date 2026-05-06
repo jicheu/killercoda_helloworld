@@ -29,7 +29,7 @@ confinement: devmode
 
 parts:
   inspire:
-    plugin: nil
+    plugin: dump
     source: .
     override-build: |
       g++ main.cpp -o $SNAPCRAFT_PART_INSTALL/inspire_me
@@ -48,7 +48,7 @@ EOF
 Build the snap. This process will set up an environment and compile the application:
 
 ```bash
-snapcraft pack
+snapcraft pack --destructive-mode
 ```{{execute}}
 
 After the build completes, install the snap. Since we built it with `devmode`, we must use `--devmode` and `--dangerous` to install it:

@@ -9,7 +9,7 @@ In order to save time, I've installed `g++` and `curl` for you. In the real worl
 
 ```bash
 sudo apt update && sudo apt install -y g++ curl
-```{{execute}}
+```
 
 ## Achieve Objectives
 Create a file named `main.cpp` by running the following command. The application uses `popen` to execute a `curl` command to a public API and extracts the inspirational quote.

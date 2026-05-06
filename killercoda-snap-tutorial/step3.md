@@ -18,7 +18,7 @@ Clean the previous build and rebuild the snap:
 
 ```bash
 snapcraft clean
-snapcraft pack
+snapcraft pack --destructive-mode
 ```{{execute}}
 
 Install the updated, strictly confined snap (note we no longer use `--devmode`):
@@ -48,7 +48,7 @@ sed -i '/command: inspire_me/a \    plugs:\n      - home\n      - network' snapc
 Rebuild and install the snap one final time:
 
 ```bash
-snapcraft pack
+snapcraft pack --destructive-mode
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
 ```{{execute}}
 

@@ -1,4 +1,4 @@
-# Step 4: Emulated Core Image Deployment
+# Step 5: Emulated Core Image Deployment
 
 ## Objectives
 We will verify that our snap runs smoothly on a minimalistic [Ubuntu Core](https://ubuntu.com/core/docs) environment. Ubuntu Core is an entirely snap-based operating system designed for IoT and embedded environments. We'll use [QEMU](https://ubuntu.com/core/docs/testing-with-qemu) to emulate the Core image, providing a robust testing environment regardless of hypervisor constraints.
@@ -21,10 +21,10 @@ We will launch the Ubuntu Core virtual machine using QEMU. Ubuntu Core requires 
 
 ```bash
 qemu-system-x86_64 -smp 2 -m 2048 -accel kvm -accel tcg \
-  -drive file=/usr/share/OVMF/OVMF_CODE.fd,if=pflash,format=raw,unit=0,readonly=on \
-  -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
-  -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
-  -nographic
+  -drive file=/usr/share/OVMF/OVMF_CODE.fd,if=pflash,format=raw,unit=0,readonly=on \
+  -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
+  -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
+  -nographic
 ```{{execute}}
 
 When Ubuntu Core boots for the first time, it will present `console-conf`. Follow the on-screen prompts to configure the network and enter your Ubuntu SSO (Launchpad) email address. This will automatically inject your SSH keys into the VM.
