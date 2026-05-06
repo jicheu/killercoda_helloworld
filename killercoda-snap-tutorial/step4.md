@@ -1,55 +1,60 @@
-# Step 4: Emulated Core Image Deployment
+# Step 4: Prepare your Ubuntu SSO credentials
 
 ## Objectives
-We will verify that our snap runs smoothly on a minimalistic [Ubuntu Core](https://ubuntu.com/core/docs) environment. Ubuntu Core is an entirely snap-based operating system designed for IoT and embedded environments. We'll use [QEMU](https://ubuntu.com/core/docs/testing-with-qemu) to emulate the Core image, providing a robust testing environment regardless of hypervisor constraints.
+
+In this step you will:
+
+- Understand why Ubuntu Core requires an Ubuntu SSO account for first-boot configuration
+- Create an Ubuntu One account (if you don't have one already)
+- Generate an SSH key pair on this machine and upload the public key to your Launchpad profile
+
+> **Why is this needed?**
+> Ubuntu Core uses [`console-conf`](https://ubuntu.com/core/docs/use-console-conf) for first-boot device provisioning. During this process it contacts your Ubuntu SSO / Launchpad profile and fetches your SSH public key, which it injects into the system. Without this, you will not be able to SSH into the VM after boot.
+>
+> **Further reading:** [console-conf documentation – ubuntu.com/core/docs](https://ubuntu.com/core/docs/use-console-conf)
 
 ## Install Tools
-QEMU and the Ubuntu Core 24 image have been installed and downloaded in the background for you to save time! 
 
-In real life, you would have to install `qemu` with apt, and download the image from [Ubuntu Archive](https://cdimage.ubuntu.com/ubuntu-core/24/stable/current/)
+No additional packages are needed. `ssh-keygen` and `cat` are pre-installed on Ubuntu.
 
-You can verify the image is ready:
+## Set up your Ubuntu One account and SSH key
+
+### 1. Create an Ubuntu One account
+
+If you do not already have one, create a free account at [login.ubuntu.com](https://login.ubuntu.com). Take note of your **username** — it becomes the login name on the Ubuntu Core device.
+
+### 2. Generate an SSH key pair
+
+Check whether an SSH key pair already exists on this machine:
 
 ```bash
-ls -lh /root/ubuntu-core-24-amd64.img
+ls ~/.ssh/id_*.pub 2>/dev/null && echo "Key found" || echo "No key found — generating one"
 ```{{execute}}
 
-*(Note: If the file is still an `.xz` or missing, wait a few moments for the background download to finish).*
-
-## Achieve Objectives
-We will launch the Ubuntu Core virtual machine using QEMU. Ubuntu Core requires a UEFI boot environment, so we include OVMF (Open Virtual Machine Firmware) as a `pflash` drive. We also use host forwarding (`hostfwd`) so we can SSH into the VM later. For official guidance, refer to [Testing Ubuntu Core with QEMU](https://ubuntu.com/core/docs/testing-with-qemu).
-
-First, copy the OVMF variable store to a writable location (QEMU needs to write EFI variables to it at runtime):
+If no key was found, generate one now:
 
 ```bash
-cp /usr/share/OVMF/OVMF_VARS_4M.fd /root/OVMF_VARS_4M.fd
+ssh-keygen -t ed25519 -C "ubuntu-core-lab" -N "" -f ~/.ssh/id_ed25519
 ```{{execute}}
 
+Display your public key:
+
 ```bash
-qemu-system-x86_64 -smp 2 -m 2048 -accel kvm -accel tcg \
-  -drive file=/usr/share/OVMF/OVMF_CODE_4M.fd,if=pflash,format=raw,unit=0,readonly=on \
-  -drive file=/root/OVMF_VARS_4M.fd,if=pflash,format=raw,unit=1 \
-  -drive file=/root/ubuntu-core-24-amd64.img,format=raw \
-  -net nic,model=virtio -net user,hostfwd=tcp::8022-:22 \
-  -nographic
+cat ~/.ssh/id_ed25519.pub
 ```{{execute}}
 
-When Ubuntu Core boots for the first time, it will present `console-conf`. Follow the on-screen prompts to configure the network and enter your Ubuntu SSO (Launchpad) email address. This will automatically inject your SSH keys into the VM.
+Copy the entire output line — you will paste it into Launchpad in the next sub-step.
 
-Once configured, you can open a second terminal tab and push your snap to the VM:
+### 3. Upload your public key to Launchpad
 
-```bash
-scp -P 8022 inspire-me_1.0_amd64.snap <your-sso-username>@localhost:
-```
+1. Go to [launchpad.net](https://launchpad.net) and sign in with your Ubuntu One credentials.
+2. Navigate to **Your profile → SSH keys**, or open `https://launchpad.net/~YOUR_USERNAME/+editsshkeys` directly.
+3. Paste the public key you copied above and click **Import**.
 
-Then SSH into the Core VM to install and test it:
+`console-conf` will contact Launchpad during first boot and inject this key automatically.
 
-```bash
-ssh -p 8022 <your-sso-username>@localhost
-sudo snap install inspire-me_1.0_amd64.snap --dangerous
-sudo snap connect inspire-me:network :network
-echo "test.txt" | inspire-me
-```
+> **Further reading:** [Testing Ubuntu Core with QEMU – ubuntu.com/core/docs](https://ubuntu.com/core/docs/testing-with-qemu)
 
-## Conclusion
-Congratulations! You've successfully built, strictly confined, and deployed your snap onto an emulated Ubuntu Core system using QEMU!
+## Summary
+
+Your Ubuntu One account is ready and your SSH public key is registered on Launchpad. In the next step you will boot the Ubuntu Core image and complete the `console-conf` first-boot wizard.

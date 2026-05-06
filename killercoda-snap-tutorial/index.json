@@ -1,6 +1,6 @@
 {
   "title": "Understanding what confinement means",
-  "description": "Learn how to build a strictly confined snap from a C++ application and deploy it on an Ubuntu Core LXD environment.",
+  "description": "Learn how to build a strictly confined snap from a C++ application and deploy it on an emulated Ubuntu Core system using QEMU.",
   "details": {
     "steps": [
       {
@@ -16,12 +16,16 @@
         "text": "step3.md"
       },
       {
-	"title": "Ubuntu SSO Preparation",
-	"text": "step4.md" 
+        "title": "Prepare Ubuntu SSO credentials",
+        "text": "step4.md"
       },
-	  {
-		"title": "Emulated Core Image Deployment",
-		"text": "step5.md"
+      {
+        "title": "Boot Ubuntu Core and configure with console-conf",
+        "text": "step5.md"
+      },
+      {
+        "title": "Deploy and test the snap on Ubuntu Core",
+        "text": "step6.md"
       }
     ],
     "intro": {
