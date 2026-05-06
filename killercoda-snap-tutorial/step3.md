@@ -21,6 +21,8 @@ snapcraft clean
 snapcraft pack --destructive-mode
 ```{{execute}}
 
+> **Reminder:** `--destructive-mode` is used here for speed in this tutorial environment. In production always run `snapcraft` without this flag so the build happens inside an isolated LXD or Multipass container. See [Build options – Snapcraft](https://snapcraft.io/docs/build-options).
+
 Install the updated, strictly confined snap (note we no longer use `--devmode`):
 
 ```bash
@@ -48,7 +50,7 @@ sed -i '/command: inspire_me/a \    plugs:\n      - home\n      - network' snapc
 Rebuild and install the snap one final time:
 
 ```bash
-snapcraft pack --destructive-mode
+snapcraft pack --destructive-mode  # tutorial shortcut — use plain `snapcraft` in production
 sudo snap install inspire-me_1.0_amd64.snap --dangerous
 ```{{execute}}
 

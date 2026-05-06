@@ -51,6 +51,16 @@ Build the snap. This process will set up an environment and compile the applicat
 snapcraft pack --destructive-mode
 ```{{execute}}
 
+> **Why `--destructive-mode`?**
+> In this tutorial we pass `--destructive-mode` so that Snapcraft builds directly on the host, which is much faster inside a Killercoda VM.
+> In real-world usage you would simply run:
+> ```
+> snapcraft
+> ```
+> Without this flag, Snapcraft automatically spins up an isolated build container (using **LXD** or **Multipass**) that exactly matches the snap's `base`. This guarantees a clean, reproducible build environment and prevents host-system libraries from leaking into the snap — which is what you always want in production.
+>
+> **Further reading:** [Build options – Snapcraft](https://snapcraft.io/docs/build-options)
+
 After the build completes, install the snap. Since we built it with `devmode`, we must use `--devmode` and `--dangerous` to install it:
 
 ```bash
